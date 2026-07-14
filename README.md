@@ -8,12 +8,13 @@ backend, database or API is required.
 
 ---
 
-## 1. The four files
+## 1. The files
 
 | File | Purpose |
 |------|---------|
 | **`index.html`** | The complete dashboard. Data + styles + logic are all inside this one file. **Double-click it to open.** (~13 MB — that size is normal; it contains the full dataset.) |
-| **`convert.py`** | Rebuilds the dashboard from your Excel/CSV. One run regenerates **both** `data.json` and a fresh self-contained `index.html`. |
+| **`RFQ_Tracker_TEMPLATE.xlsx`** | A ready-to-fill Excel template with the exact column headers the dashboard expects, two example rows, and an Instructions sheet. **Fill it with your data, then upload it straight into the dashboard** (see §2b) — no Python needed. |
+| **`convert.py`** | Optional power-user path. Rebuilds the dashboard from an Excel/CSV on your computer. One run regenerates **both** `data.json` and a fresh self-contained `index.html`. |
 | **`data.json`** | The cleaned, normalized data on its own (records + a `meta` block with distinct values, completeness and reconciliation). Provided for reuse/auditing; the dashboard itself does **not** need it because the same data is already embedded in `index.html`. |
 | **`README.md`** | This document. |
 
@@ -23,37 +24,85 @@ backend, database or API is required.
 
 **Just double-click `index.html`.** It opens in your default browser with no server and no setup.
 
-The only thing loaded from the internet is the Chart.js charting library (over `https`), so the
-viewer needs an internet connection for the charts to render. Everything else — all data and
-calculations — is inside the file and works offline.
+The pieces loaded from the internet (over `https`) are the Chart.js charting library, its value-label
+plugin, and the SheetJS reader used for in-browser uploads — so the viewer needs an internet
+connection for the charts and the upload feature. Everything else — all data and calculations — is
+inside the file and works offline.
+
+---
+
+## 2b. Update the data yourself — no Python (recommended)
+
+You can refresh the whole dashboard from a spreadsheet without running `convert.py`:
+
+1. Open **`RFQ_Tracker_TEMPLATE.xlsx`**. Keep Row 1 (the headers) exactly as-is.
+2. Replace the two blue example rows with your data and keep adding rows (one row = one RFQ line item).
+   Enter dates as real dates and amounts as plain numbers.
+3. Save the file.
+4. In the dashboard, click **“⤒ Upload data”** (top-right of the header) and pick your file.
+
+Every KPI, chart, table and slicer refreshes instantly from the uploaded file, using the *same*
+cleaning and dedup-aware maths as `convert.py` (verified to reconcile to the identical totals). A
+confirmation banner shows how many rows and RFQs were loaded. If the file is missing an expected
+column, the upload still works and tells you which sections may be blank. You can also upload a plain
+`.xlsx`/`.xls`/`.csv` export of your own tracker as long as the column headings match.
 
 ---
 
 ## 3. What it does
 
-Nine linked tabs, all driven by shared global slicers, a universal search box, and a light/dark theme:
+Ten linked tabs, all driven by shared global slicers, a universal search box, an icon-led
+navigation bar, and a **red / black / white** theme (light: white surfaces + black text + red accents;
+dark: black surfaces + white text + red accents). Green and amber are retained **only where they carry
+data meaning** — profit vs loss, won vs lost, favourable vs adverse variance, and the GP % thresholds —
+because colour-coding those in red alone would remove the signal:
 
 1. **Executive Overview** — headline KPIs, monthly trends, funnel, result/status donuts, top
    customers/suppliers/POCs, RFQ ageing, and an automatic management-alerts panel.
+   The two monthly charts show **month-only axes with a per-chart year selector** (pick any
+   year or *All years*) and print their values on the bars. The **Top-10 Customers** cards (by
+   quoted value and by PO value) and **Top ET POCs** are enriched tables that show a
+   **proportional value bar behind each name** plus **value · GP % · count · share of total**.
+   GP % is **colour-coded: below 10 % red, 10–20 % neutral, above 20 % green**.
 2. **RFQ Tracker** — RFQ KPIs, response-time and deadline compliance, win-rate by
    customer/POC/category, inferred lost-reason analysis, and a full drill-down RFQ table.
+   *Monthly Received vs Quoted vs Won* and *Quoted vs Won Value by Month* have **month-only axes,
+   a per-chart year selector, and value labels**.
 3. **Supplier & Procurement** — procurement value, supplier selection frequency, quote
-   responsiveness, a data-available supplier score, and a supplier table.
+   responsiveness, a data-available supplier score, and a supplier table. *Gross Profit Supported by
+   Supplier (Top 12)* now has a **year selector** and value labels.
 4. **Customer PO & Delivery** — dedicated PO-number search, PO value / OA-processing KPIs and charts,
-   and a per-PO detail table.
+   and a per-PO detail table. *Customer PO Value by Month*, *PO Value by Customer (Top 12)* and *PO
+   Value by Product Category* now carry **year selectors** (and month-only axis / values where
+   applicable).
 5. **ET POC Performance** — per-POC volume, win rate, conversion, profitability, responsiveness and a
    **balanced internal indicator** (not an appraisal), with ranking and quartiles.
-6. **Quarterly / Yearly** — year-vs-year variance table with favourable-direction colouring, plus YoY
-   monthly charts.
-7. **Customer Analysis** — searchable customer selector, multi-year trends, contribution %,
-   category/supplier/POC mix, and rule-based customer insights.
-8. **Risk Analysis** — risk engine that scores every RFQ (0–100, Low→Critical), risk distribution
+6. **Yearly Comparison** — compare **any three years** side by side. The variance table now shows the
+   **% change inside each of Year 2 and Year 3** (vs the prior shown year) and a final **Variance
+   column = the absolute difference between the last two years** (the standalone “%” column has been
+   removed). Multi-year monthly value charts print aligned value labels.
+7. **Quarterly Comparison** *(new)* — pick **which years to compare** (year chips) and a **chart
+   metric** (Sales / Gross Profit / Margin %). Four **Q1–Q4 Sales cards use won data only**, each
+   showing GP % and PO count; a **Sales-by-Quarter year-over-year** chart (quarters on the axis, one
+   series per year, values in millions); a **Sales, Gross Profit & Margin by Quarter** combo chart;
+   and a full comparison table.
+8. **Customer Analysis** — customer selector including an **“All customers”** option and **three year
+   pickers**; the yearly comparison table uses the **same restructured variance format** as tab 6, and
+   *Monthly PO Value* has a month-only axis, year selector and value labels.
+9. **Risk Analysis** — risk engine that scores every RFQ (0–100, Low→Critical), risk distribution
    charts, exposure, and a drill-down risk register with recommended actions.
-9. **Data Quality & Controls** — completeness matrix, DQ counters, and a downloadable issue table.
+10. **Data Quality & Controls** — DQ counters, a downloadable issue table, and a **field-completeness
+    matrix that is now fully live**: it is recomputed from the **current filter selection**, so the
+    **Year (ET Quote)** and **ET POC** slicers (and every other slicer) drive it. **Click any field**
+    — e.g. *Supplier Name* or *Supplier Total Price* — and the issues table below lists the exact
+    line items where that field is missing (row number, record, suggested correction), so a blank
+    entry can be traced straight back to its source row. Click again, or use *Clear field filter*,
+    to return to the full issue list.
 
-Every chart, KPI and table respects the current filters. Charts are click-to-filter; tables sort /
-search / paginate / toggle columns / export CSV / open a drill-down modal; and the whole view can be
-exported (CSV per dataset, an HTML management summary, and a print/PDF view).
+Every chart, KPI and table respects the current filters. **Charts show their values directly on the
+bars, lines and slices** (value labels), in addition to hover tooltips. Charts are click-to-filter;
+tables sort / search / paginate / toggle columns / export CSV / open a drill-down modal; and the whole
+view can be exported (CSV per dataset, an HTML management summary, and a print/PDF view).
 
 ---
 
